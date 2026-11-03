@@ -62,10 +62,15 @@ export const getPattern = (label: string, next?: string): Pattern | null => {
     const cacheKey = `${label}#${next}`
     if (!patternCache[cacheKey]) {
       if (match[2]) {
-        patternCache[cacheKey] =
-          next && next[0] !== ':' && next[0] !== '*'
-            ? [cacheKey, match[1], new RegExp(`^${match[2]}(?=/${next})`)]
-            : [label, match[1], new RegExp(`^${match[2]}$`)]
+        if (next && next[0] !== ':' && next[0] !== '*') {
+          // A following literal may contain brackets, as in `/[draft]`. Escape them so the
+          // lookahead matches that text instead of treating `[draft]` as a character class.
+          // Regex parameters keep their own brackets; they are not inserted into this lookahead.
+          const lookahead = next.replace(/[\[\]]/g, '\\$&')
+          patternCache[cacheKey] = [cacheKey, match[1], new RegExp(`^${match[2]}(?=/${lookahead})`)]
+        } else {
+          patternCache[cacheKey] = [label, match[1], new RegExp(`^${match[2]}$`)]
+        }
       } else {
         patternCache[cacheKey] = [label, match[1], true]
       }
