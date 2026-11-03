@@ -81,6 +81,21 @@ describe('url', () => {
       expect(res).toEqual([':id{[0-9]+}#next', 'id', /^[0-9]+(?=\/next)/])
     })
 
+    it('regex pattern with a literal next segment that contains brackets', () => {
+      const res = getPattern(':id{[0-9]+}', '[draft]')
+      expect(res).toEqual([':id{[0-9]+}#[draft]', 'id', /^[0-9]+(?=\/\[draft\])/])
+    })
+
+    it('regex pattern with a literal next segment without brackets', () => {
+      const res = getPattern(':id{[0-9]+}', 'file.html')
+      expect(res).toEqual([':id{[0-9]+}#file.html', 'id', /^[0-9]+(?=\/file.html)/])
+    })
+
+    it('does not escape brackets that belong to a following regex parameter', () => {
+      const res = getPattern(':id{[0-9]+}', ':name{[a-z]+}')
+      expect(res).toEqual([':id{[0-9]+}', 'id', /^[0-9]+$/])
+    })
+
     it('wildcard', () => {
       const res = getPattern('*')
       expect(res).toBe('*')
