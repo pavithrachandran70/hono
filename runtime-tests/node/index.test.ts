@@ -135,11 +135,17 @@ describe('stream', () => {
     const req = agent.get('/stream', { signal: controller.signal })
 
     expect(aborted).toBe(false)
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    // Headers mean the handler has registered onAbort. Aborting earlier can
+    // cancel the request before that callback exists, and the wait never ends.
+    await req
     controller.abort()
-    await req.catch(() => {})
+
+    const start = Date.now()
     while (!aborted) {
-      await new Promise((resolve) => setTimeout(resolve))
+      if (Date.now() - start > 1000) {
+        throw new Error('onAbort did not run within 1 second')
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10))
     }
     expect(aborted).toBe(true)
   })
@@ -188,11 +194,17 @@ describe('streamSSE', () => {
     const req = agent.get('/stream', { signal: controller.signal })
 
     expect(aborted).toBe(false)
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    // Headers mean the handler has registered onAbort. Aborting earlier can
+    // cancel the request before that callback exists, and the wait never ends.
+    await req
     controller.abort()
-    await req.catch(() => {})
+
+    const start = Date.now()
     while (!aborted) {
-      await new Promise((resolve) => setTimeout(resolve))
+      if (Date.now() - start > 1000) {
+        throw new Error('onAbort did not run within 1 second')
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10))
     }
     expect(aborted).toBe(true)
   })
